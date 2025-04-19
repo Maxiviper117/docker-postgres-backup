@@ -1,7 +1,7 @@
 # ────────────────
 # Stage 1: Build
 # ────────────────
-FROM node:22-slim AS builder
+FROM node:23-slim AS builder
 
 WORKDIR /usr/src/app
 
@@ -15,7 +15,7 @@ COPY . .
 # ────────────────
 # Stage 2: Runtime
 # ────────────────
-FROM node:22-slim
+FROM node:23-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
