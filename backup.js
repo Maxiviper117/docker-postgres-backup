@@ -78,6 +78,42 @@ const pg_config = {
     database: process.env.POSTGRES_DB,
 };
 
+const backupRetentionDays = parseInt(process.env.BACKUP_RETENTION_DAYS || "0", 30); // default to 30 days
+
+async function deleteOldBackups() {
+    if (!backupRetentionDays || isNaN(backupRetentionDays) || backupRetentionDays <= 0) {
+        return; // No retention policy set
+    }
+    const { ListObjectsV2Command, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+    const prefix = process.env.S3_PREFIX || "";
+    const now = Date.now();
+    const retentionMs = backupRetentionDays * 24 * 60 * 60 * 1000;
+    let ContinuationToken = undefined;
+    do {
+        const listParams = {
+            Bucket: process.env.S3_BUCKET,
+            Prefix: prefix,
+            ContinuationToken,
+        };
+        const listResp = await s3Client.send(new ListObjectsV2Command(listParams));
+        if (listResp.Contents) {
+            for (const obj of listResp.Contents) {
+                if (!obj.Key) continue;
+                // Expect backup-YYYY-MM-DDTHH-MM-SS-SSSZ.sql
+                const match = obj.Key.match(/backup-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.sql/);
+                if (match) {
+                    const backupDate = new Date(match[1].replace(/-/g, ":").replace(/T(\d{2}):(\d{2}):(\d{2}):(\d{3})Z/, "T$1:$2:$3.$4Z"));
+                    if (now - backupDate.getTime() > retentionMs) {
+                        await s3Client.send(new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: obj.Key }));
+                        console.log(`Deleted old backup from S3: ${obj.Key}`);
+                    }
+                }
+            }
+        }
+        ContinuationToken = listResp.IsTruncated ? listResp.NextContinuationToken : undefined;
+    } while (ContinuationToken);
+}
+
 async function createBackup() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const backupFileName = `backup-${timestamp}.sql`;
@@ -100,6 +136,9 @@ async function createBackup() {
 
         await s3Client.send(new PutObjectCommand(uploadParams));
         console.log(`Backup uploaded to S3: ${uploadParams.Key}`);
+
+        // Delete old backups if retention is set
+        await deleteOldBackups();
 
         // Clean up only after successful upload
         await $`rm ${backupPath}`;
