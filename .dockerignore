@@ -1,11 +1,8 @@
 node_modules
-.dockerignore
-.git
-.gitignore
-Dockerfile
-docker-compose*.yml
-*.log
-*.md
-*.bak
 .env
-pnpm-lock.yaml
+*.log
+test/
+Dockerfile
+DOCKERHUB.md
+push-image.sh
+docker-volume
