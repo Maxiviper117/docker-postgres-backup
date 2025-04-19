@@ -1,6 +1,6 @@
 {
     "name": "docker-postgres-backup",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "PostgreSQL backup to S3 with cron scheduling",
     "main": "backup.js",
     "type": "module",
