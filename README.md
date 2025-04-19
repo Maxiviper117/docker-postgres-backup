@@ -8,7 +8,6 @@ A simple Node.js utility to automate PostgreSQL database backups and upload them
 - Scheduled PostgreSQL backups using cron
 - Uploads backups to S3-compatible storage
 - Configurable via environment variables
-- Automatic bucket creation (optional)
 
 ## Usage
 

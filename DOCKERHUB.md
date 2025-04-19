@@ -46,9 +46,10 @@ psql -h <host> -U <user> -d <db> -f backup-YYYY-MM-DDTHH-MM-SS.sql
 
 ## Source & Issues
 See [GitHub](https://github.com/Maxiviper117/docker-postgres-backup/)
+See [GitHub - issues](https://github.com/Maxiviper117/docker-postgres-backup/issues)
 
 ## Versions
 
-
+- `v1.2.0` - Added warning for non-PostgreSQL 16 and non-existent bucket.
 - `v1.1.0` - Added backup retention policy.
 - `v1.0.0` - Initial release with PostgreSQL 16 support.
