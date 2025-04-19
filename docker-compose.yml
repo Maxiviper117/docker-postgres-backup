@@ -1,0 +1,5 @@
+services:
+    postgres-backup:
+        build: .
+        env_file:
+            - .env
