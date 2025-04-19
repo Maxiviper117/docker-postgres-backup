@@ -73,5 +73,28 @@ docker-compose up
    psql -h <host> -U <user> -d <db> -f backup-YYYY-MM-DDTHH-MM-SS.sql
    ```
 
+## Quick Start (Docker Image)
+
+Run the image directly with recommended options:
+
+```sh
+docker run \
+  --restart unless-stopped \
+  -e POSTGRES_HOST=host.docker.internal \
+  -e POSTGRES_PORT=5432 \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_DB=mydb \
+  -e AWS_REGION=us-east-1 \
+  -e AWS_ACCESS_KEY_ID=your_access_key \
+  -e AWS_SECRET_ACCESS_KEY=your_secret_key \
+  -e S3_ENDPOINT=https://s3.amazonaws.com \
+  -e S3_BUCKET=my-bucket \
+  -e S3_PREFIX=backups/ \
+  -e BACKUP_SCHEDULE="0 0 * * *" \
+  -e BACKUP_RETENTION_DAYS=30 \
+  postgres-backup
+```
+
 ## License
 MIT

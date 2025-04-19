@@ -8,6 +8,7 @@ Automated PostgreSQL backup utility for Docker. Backs up your database and uploa
 
 ```sh
 docker run \
+  --restart unless-stopped \
   -e POSTGRES_HOST=host.docker.internal \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_USER=postgres \
@@ -20,6 +21,7 @@ docker run \
   -e S3_BUCKET=my-bucket \
   -e S3_PREFIX=backups/ \
   -e BACKUP_SCHEDULE="0 0 * * *" \
+  -e BACKUP_RETENTION_DAYS=30 \
   postgres-backup
 ```
 
