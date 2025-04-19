@@ -23,18 +23,30 @@ docker build -t postgres-backup .
 Create a `.env` file or pass variables via `docker run`/`docker-compose`:
 
 ```
-POSTGRES_HOST=your_postgres_host
+# =========================
+# PostgreSQL Configuration
+# =========================
+POSTGRES_HOST=your_postgres_host # use host.docker.internal for Docker on Windows/Mac if backing up db on same machine in a container
 POSTGRES_PORT=5432
-POSTGRES_USER=your_user
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=your_db
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-S3_ENDPOINT=https://s3.amazonaws.com # or your MinIO endpoint
-S3_BUCKET=your-bucket
-S3_PREFIX=backups/
-BACKUP_SCHEDULE=0 0 * * * # every day at midnight UTC
+POSTGRES_USER=your_postgres_user
+POSTGRES_PASSWORD=your_postgres_password
+POSTGRES_DB=your_postgres_db
+POSTGRES_URI=postgresql://your_postgres_user:your_postgres_password@your_postgres_host:5432/your_postgres_db
+# =========================
+# AWS S3 Configuration
+# =========================
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_REGION=your_aws_region
+S3_BUCKET=your_s3_bucket
+S3_PREFIX=your_s3_prefix
+S3_ENDPOINT=http://localhost:9000 
+# =========================
+# Configurations
+# =========================
+BACKUP_SCHEDULE="0 0 * * *"
+BACKUP_RETENTION_DAYS=30
+
 ```
 
 ### 3. Run the container
