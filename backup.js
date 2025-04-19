@@ -2,13 +2,14 @@ import {
     S3Client,
     PutObjectCommand,
     HeadBucketCommand,
-    CreateBucketCommand,
 } from "@aws-sdk/client-s3";
 import { CronJob } from "cron";
 import { $ } from "zx";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
+import pkg from "pg";
+const { Client } = pkg;
 dotenv.config();
 
 // Validate required environment variables
@@ -58,11 +59,10 @@ async function ensureBucketExists(bucketName) {
         // Bucket exists
     } catch (err) {
         if (err.name === "NotFound" || err.$metadata?.httpStatusCode === 404) {
-            // Bucket does not exist, create it
-            await s3Client.send(
-                new CreateBucketCommand({ Bucket: bucketName })
+            // Bucket does not exist, throw error with instruction
+            throw new Error(
+                `S3 bucket '${bucketName}' does not exist. Please create the bucket manually in your S3 provider before running this backup. (Expected bucket name from env: ${bucketName})`
             );
-            console.log(`Created S3 bucket: ${bucketName}`);
         } else {
             // Other error
             throw err;
@@ -149,6 +149,34 @@ async function createBackup() {
     }
 }
 
+async function checkPostgresVersion() {
+    const client = new Client({
+        host: pg_config.host,
+        port: pg_config.port,
+        user: pg_config.user,
+        password: pg_config.password,
+        database: pg_config.database,
+    });
+    try {
+        await client.connect();
+        const res = await client.query("SHOW server_version;");
+        const versionString = res.rows[0].server_version || res.rows[0].server_version_num || res.rows[0].server_version_full || Object.values(res.rows[0])[0];
+        // Accepts 16, 16.x, 16.x.x, etc
+        const major = versionString.split(".")[0];
+        if (major !== "16") {
+            console.error(`ERROR: Connected PostgreSQL server version is ${versionString}, but only v16 is supported.`);
+            process.exit(1);
+        } else {
+            console.log(`Connected to PostgreSQL server version ${versionString} (OK)`);
+        }
+    } catch (err) {
+        console.error("Failed to check PostgreSQL version:", err.message || err);
+        process.exit(1);
+    } finally {
+        await client.end();
+    }
+}
+
 // Start cron job
 const job = new CronJob(
     process.env.BACKUP_SCHEDULE || "0 0 * * *", // Default to daily at midnight
@@ -160,6 +188,12 @@ const job = new CronJob(
 
 console.log("Backup scheduler started");
 console.log(`Next backup scheduled for: ${job.nextDates()}`);
+
+// Ensure S3 bucket exists
+await ensureBucketExists(s3_config.s3_bucket);
+
+// Run version check before anything else
+await checkPostgresVersion();
 
 // Run initial backup and log result
 (async () => {
