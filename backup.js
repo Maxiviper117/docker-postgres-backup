@@ -11,6 +11,27 @@ import fs from "fs";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnv = [
+    "POSTGRES_HOST",
+    "POSTGRES_PORT",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DB",
+    "AWS_REGION",
+    "S3_ENDPOINT",
+    "S3_BUCKET",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+];
+const missing = requiredEnv.filter((v) => !process.env[v]);
+if (missing.length) {
+    console.error(
+        `Missing required environment variables: ${missing.join(", ")}`
+    );
+    process.exit(1);
+}
+
 const s3_config = {
     aws_region: process.env.AWS_REGION,
     s3_endpoint: process.env.S3_ENDPOINT,
@@ -50,8 +71,7 @@ async function ensureBucketExists(bucketName) {
 }
 
 const pg_config = {
-    // host: process.env.POSTGRES_HOST,
-    host: "host.docker.internal",
+    host: process.env.POSTGRES_HOST,
     port: process.env.POSTGRES_PORT,
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
@@ -67,11 +87,8 @@ async function createBackup() {
         console.log(`Starting backup at ${timestamp}`);
 
         // Create PostgreSQL dump using zx
-        await $`PGPASSWORD="${pg_config.password}" pg_dump -h ${pg_config.host} -p ${pg_config.port} -U ${pg_config.user} -d ${pg_config.database} -f ${backupPath}`;
+        await $`PGPASSWORD=\"${pg_config.password}\" pg_dump -h ${pg_config.host} -p ${pg_config.port} -U ${pg_config.user} -d ${pg_config.database} -f ${backupPath}`;
         console.log("Database dump created successfully");
-
-        // Ensure S3 bucket exists
-        // await ensureBucketExists(process.env.S3_BUCKET);
 
         // Upload to S3
         const fileContent = fs.readFileSync(backupPath);
@@ -84,11 +101,12 @@ async function createBackup() {
         await s3Client.send(new PutObjectCommand(uploadParams));
         console.log(`Backup uploaded to S3: ${uploadParams.Key}`);
 
-        // Clean up using zx
+        // Clean up only after successful upload
         await $`rm ${backupPath}`;
         console.log("Temporary backup file cleaned up");
     } catch (error) {
-        console.error("Backup failed:", error);
+        // Avoid logging sensitive info
+        console.error("Backup failed:", error.message || error);
     }
 }
 
