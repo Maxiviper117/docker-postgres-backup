@@ -63,4 +63,4 @@ USER backup
 ENTRYPOINT ["node", "backup.js"]
 
 # build with:
-# docker buildx build --platform linux/arm64,linux/amd64 -t docker.io/maxiviper117
+# docker  build -t maxiviper117/pg16-backup-utility:latest .
