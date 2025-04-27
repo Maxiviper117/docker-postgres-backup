@@ -15,13 +15,30 @@ fi
 TAG_LATEST="latest"
 TAG_VERSION="$VERSION"
 
-echo "Building Docker image with tags: $TAG_VERSION and $TAG_LATEST..."
-docker build -t $IMAGE_NAME:$TAG_VERSION -t $IMAGE_NAME:$TAG_LATEST .
+# Platform selection prompt
+echo "Select platform(s) to build for:"
+echo "1) linux/amd64"
+echo "2) linux/arm64"
+echo "3) both linux/amd64,linux/arm64"
+read -r -p "Enter choice [1-3]: " platform_choice
 
-echo "Pushing Docker image with tag $TAG_VERSION..."
-docker push $IMAGE_NAME:$TAG_VERSION
+case $platform_choice in
+1) PLATFORMS="linux/amd64" ;;
+2) PLATFORMS="linux/arm64" ;;
+# 3) PLATFORMS="linux/amd64,linux/arm64" ;;
+*)
+  echo "Invalid choice. Using default linux/amd64"
+  PLATFORMS="linux/amd64"
+  ;;
+esac
 
-echo "Pushing Docker image with tag $TAG_LATEST..."
-docker push $IMAGE_NAME:$TAG_LATEST
+echo "Building Docker image with buildx for platforms: $PLATFORMS"
+echo "Tags: $TAG_VERSION and $TAG_LATEST..."
 
-echo "Docker image pushed as $IMAGE_NAME:$TAG_VERSION and $IMAGE_NAME:$TAG_LATEST"
+docker buildx build \
+  --platform "$PLATFORMS" \
+  -t "$IMAGE_NAME:$TAG_VERSION" \
+  -t "$IMAGE_NAME:$TAG_LATEST" \
+  --push .
+
+echo "Docker image pushed as '$IMAGE_NAME':'$TAG_VERSION' and '$IMAGE_NAME':'$TAG_LATEST'"
