@@ -22,6 +22,10 @@ echo "2) linux/arm64"
 echo "3) both linux/amd64,linux/arm64"
 read -r -p "Enter choice [1-3]: " platform_choice
 
+# Add build-only option
+read -r -p "Build only (no push)? [y/N]: " build_only
+BUILD_ONLY=${build_only:-n}
+
 case $platform_choice in
 1) PLATFORMS="linux/amd64" ;;
 2) PLATFORMS="linux/arm64" ;;
@@ -35,10 +39,18 @@ esac
 echo "Building Docker image with buildx for platforms: $PLATFORMS"
 echo "Tags: $TAG_VERSION and $TAG_LATEST..."
 
-docker buildx build \
-  --platform "$PLATFORMS" \
-  -t "$IMAGE_NAME:$TAG_VERSION" \
-  -t "$IMAGE_NAME:$TAG_LATEST" \
-  --push .
-
-echo "Docker image pushed as '$IMAGE_NAME':'$TAG_VERSION' and '$IMAGE_NAME':'$TAG_LATEST'"
+if [[ "${BUILD_ONLY,,}" =~ ^(y|yes)$ ]]; then
+  docker buildx build \
+    --platform "$PLATFORMS" \
+    -t "$IMAGE_NAME:$TAG_VERSION" \
+    -t "$IMAGE_NAME:$TAG_LATEST" \
+    .
+  echo "Docker image built locally as '$IMAGE_NAME':'$TAG_VERSION' and '$IMAGE_NAME':'$TAG_LATEST'"
+else
+  docker buildx build \
+    --platform "$PLATFORMS" \
+    -t "$IMAGE_NAME:$TAG_VERSION" \
+    -t "$IMAGE_NAME:$TAG_LATEST" \
+    --push .
+  echo "Docker image pushed as '$IMAGE_NAME':'$TAG_VERSION' and '$IMAGE_NAME':'$TAG_LATEST'"
+fi

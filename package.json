@@ -10,11 +10,11 @@
         "changeset:version": "changeset version"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.787.0",
+        "@aws-sdk/client-s3": "^3.797.0",
         "@dotenvx/dotenvx": "^1.41.0",
         "cron": "^4.3.0",
         "dotenv": "^16.5.0",
-        "pg": "^8.14.1",
+        "pg": "^8.15.6",
         "pg-dump": "^0.10.0",
         "zx": "^8.5.3"
     },
