@@ -37,7 +37,7 @@ RUN apt-get update \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create 'backup' only if it doesn't already exist
+# checks if a user named backup exists in the container. If not, it creates a new system user called backup
 RUN if ! id -u backup >/dev/null 2>&1; then \
     useradd \
     --system \
@@ -61,3 +61,6 @@ USER backup
 # (No ENV defaults: all must be passed at runtime)
 
 ENTRYPOINT ["node", "backup.js"]
+
+# build with:
+# docker buildx build --platform linux/arm64,linux/amd64 -t docker.io/maxiviper117
